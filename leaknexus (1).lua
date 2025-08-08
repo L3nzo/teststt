@@ -1,3 +1,4 @@
+local CloneRef = cloneref or function(a)return a end
 
 --// Service handlers
 local Services = setmetatable({}, {
