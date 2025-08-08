@@ -1,3 +1,352 @@
+if not LPH_OBFUSCATED then
+	LPH_JIT = function(Function) return Function end
+	LPH_JIT_MAX = function(Function) return Function end
+	LPH_NO_VIRTUALIZE = function(Function) return Function end
+    LPH_NO_UPVALUES = function(Function) return function(...) return Function(...) end end
+	LPH_ENCSTR = function(String) return String end
+	LPH_ENCNUM = function(Number) return Number end
+	LPH_CRASH = function() return rconsoleprint("DEBUG: CLIENT CALLED CRASH") end
+
+	if not getgenv then
+		getgenv = function() return _G end
+	end
+
+	if not cloneref then
+		cloneref = function(Reference) return Reference end
+	end
+
+	if not loadfile then
+		loadfile = function(...) return ... end
+	end
+
+	if not readfile then
+		readfile = function(...) return ... end
+	end
+
+	if not request then
+		request = function(...) return ... end
+	end
+
+	if not clonefunction then
+		clonefunction = function(f) return f end
+	end
+
+	if not newcclosure then
+		newcclosure = function(...) return ... end
+	end
+
+	if not hookfunction then
+		hookfunction = function() end
+	end
+
+	if not getrenv then
+		getrenv = function() return {} end
+	end
+end 
+
+local Start       = tick();
+local Executor    = identifyexecutor()
+
+writefile("LogFile.txt", "[Skidware]: Initating bypass...\n")
+
+local function Log(txt)
+	appendfile("LogFile.txt", txt.. " | "..tostring(tick() - Start));
+	appendfile("LogFile.txt", "\n");
+end;
+
+LPH_JIT_MAX(function()
+	if game.PlaceId ~= 17574618959 then --// I need this region to be completely cut off from everythning else soooo
+		local Players = cloneref(game:GetService("Players"))
+		local Client = Players.LocalPlayer; 
+
+		local Character = Client.Character; 
+		local Humanoid = Character and Character:WaitForChild("Humanoid");
+
+		if not Humanoid then 
+			Client:Kick("Please load the script when you are spawned in.") 
+			return 
+		end;
+
+		local DeepSearchTable;
+		DeepSearchTable = LPH_NO_VIRTUALIZE(function(Table, TargetValue, MaxDepth, CurrentPath, Visited, Results)
+			if MaxDepth <= 0 or type(Table) ~= "table" then 
+				return; 
+			end;
+			Visited = Visited or {};
+			Results = Results or {};
+			CurrentPath = CurrentPath or "";
+
+			if Visited[Table] then 
+				return;
+			end;
+			Visited[Table] = true;
+
+			for Key, Value in pairs(Table) do
+				local Path = CurrentPath .. "[" .. tostring(Key) .. "]"
+
+				if Value == TargetValue then
+					table.insert(Results, {
+						Path = Path,
+						Parent = Table,
+						Key = Key,
+						Value = Value
+					});
+				elseif type(Value) == "table" then
+					DeepSearchTable(Value, TargetValue, MaxDepth - 1, Path, Visited, Results)
+				end;
+			end;
+			return Results
+		end);
+
+		local BypassCheck1 = false
+		local BypassCheck2 = false 
+
+		Log("[Skidware]: Initiating Hook #1")
+		for Index, Table in getgc(true) do 
+			if type(Table) ~= "table" then
+				continue
+			end; 
+			if typeof(rawget(Table, 1)) == "Instance" and rawget(Table, 1).Name == "Remotes" then 
+				local BanTable = rawget(Table, 4);
+
+				setmetatable(BanTable, { 
+					__index = function() end,
+					__newindex = function(...) 
+                                    --[[local ArgumentString = "Ban Table #1 Changed";
+                                    local Args = {...};
+
+                                    for Index, Value in Args[3] do 
+                                          ArgumentString = ArgumentString .. tostring(Index) .. " = "..tostring(Value).."\n"
+                                    end; 
+                                    
+                                    Log(ArgumentString)]]
+					end
+				});
+				BypassCheck1 = true
+			end;
+		end;
+
+		if not BypassCheck1 then 
+			Client:Kick("Failed to load. 0x01");
+			return
+		end;
+		Log("[Skidware]: Initiated Hook #1")
+		Log("[Skidware]: Initiating Hook #2")
+
+		for Index, Table in getgc(true) do 
+			if type(Table) ~= "table" then 
+				continue 
+			end; 
+			if rawget(Table, 1) == Character and rawget(Table, 2) == Humanoid and #Table == 9 then 
+				local BanTable_1 = rawget(Table, 8);
+				local BanTable_2 = rawget(Table, 5);
+
+				setmetatable(BanTable_1, {
+					__index = function() end,
+					__newindex = function(...) 
+                                    --[[local ArgumentString = "Ban Table #2 Changed";
+                                    local Args = {...};
+
+                                    for Index, Value in Args[3] do 
+                                          ArgumentString = ArgumentString .. tostring(Index) .. " = "..tostring(Value).."\n"
+                                    end; 
+                                    
+                                    Log(ArgumentString)]]
+					end;
+				});
+
+				setmetatable(BanTable_2, {
+					__index = function() end,
+					__newindex = function(...) 
+                                    --[[local ArgumentString = "Ban Table #3 Changed";
+                                    local Args = {...};
+
+                                    for Index, Value in Args[3] do 
+                                          ArgumentString = ArgumentString .. tostring(Index) .. " = "..tostring(Value).."\n"
+                                    end; 
+                                    
+                                    Log(ArgumentString)]]
+					end;
+				});
+
+				BanTable_2 = nil;
+				BypassCheck2 = true
+			end;
+		end;
+
+		if not BypassCheck2 then 
+			Client:Kick("Failed to load. 0x02");
+			return
+		else 
+			Log("[Skidware]: Init Check #2")
+		end; 
+
+		Log("[Skidware]: Initiated Hook #2")
+
+		for _, Function in getgc(false) do 
+			if type(Function) ~= "function" then 
+				continue 
+			end; 
+			if not islclosure(Function) then 
+				continue 
+			end; 
+			if isexecutorclosure(Function) then 
+				continue 
+			end; 
+
+			local Info = debug.getinfo(Function);
+
+			if Info.source:find("AssetContainer") then 
+				local Name = Info.name; 
+				local Protos = debug.getprotos(Function);
+
+				local Upvalues = debug.getupvalues(Function);
+
+				if Protos[1] then 
+					local Proto = debug.getproto(Function, 1)
+					local Constants = debug.getconstants(Proto);
+
+					if Constants[2] == "SurfaceGui" then  --// HIGHLIGHTS, BB GUI
+						hookfunction(debug.getproto(Function, 1), LPH_NO_UPVALUES(function(...) 
+							return
+						end));
+
+						--print("ESP DTC:", Proto)
+					end;
+
+					if table.find(Constants, "Foundation") then --// XRAY, TOUCH COLLISIONS
+						hookfunction(debug.getproto(Function, 1), LPH_NO_UPVALUES(function(...) 
+							return
+						end));
+						--print("XRAY DTC:", Proto)
+					end;
+
+					if table.find(Constants, "LocalAmmo") and table.find(Constants, "Equipped") then  --// VM ATTRIBUTES
+						hookfunction(debug.getproto(Function, 1), LPH_NO_UPVALUES(function(...) 
+							return
+						end));
+						--print("Attr DTC:", Proto)
+					end;
+
+					if table.find(Constants, "WalkSpeed") then --// Walk Speed
+						hookfunction(debug.getproto(Function, 1), LPH_NO_UPVALUES(function() 
+							return
+						end));
+						--print("Walkspeed DTC:", Proto)
+					end;
+				end;
+
+                        --[[
+                        local FOVResults = DeepSearchTable(Upvalues, "FieldOfView", 10, "", {}, {}, Function)
+                        local WalkspeedResults  = DeepSearchTable(Upvalues, 18.01, 11, "", {}, {}, Function)
+                        local BrightnessResults = DeepSearchTable(Upvalues, 2.001, 11, "", {}, {}, Function)
+                        local HazeResults = DeepSearchTable(Upvalues, 2.079, 11, "", {}, {}, Function)
+
+                        local AdornmentResults = DeepSearchTable(Upvalues, "PVAdornment", 11, "", {}, {}, Function)
+                        local OutdoorResults = DeepSearchTable(Upvalues, "OutdoorAmbient", 10, "", {}, {}, Function);
+
+                        if AdornmentResults then 
+                              for I, Result in AdornmentResults do 
+                                    if Result.Parent then 
+                                          for Index, Value in Result.Parent do 
+                                                if Value == "PVAdornment" or Value == "HandleAdornment" then 
+                                                      --// Chams bypass
+                                                      Result.Parent[Index] = "PartAdornment";
+                                                      --print("Part adornment DTC:", Result.Parent)
+                                                end;
+                                          end;
+                                    end;
+                              end;
+                        end;
+
+                        if OutdoorResults then 
+                              for I, Result in OutdoorResults do 
+                                    if Result.Parent then 
+                                          for Index, Value in Result.Parent do 
+                                                if Value == "OutdoorAmbient" then 
+                                                      --// Ambient Detection 1
+                                                      Result.Parent[Index] = "ColorShift_Bottom";
+                                                      --print("Ambient DTC:", Result.Parent)
+                                                end;
+                                          end;
+                                    end;
+                              end;
+                        end;
+
+                        if BrightnessResults then 
+                              for BrighnessIndex, Result in BrightnessResults do 
+                              local Parent = Result.Parent; 
+                                    if Parent then 
+                                          for Index, Value in Result.Parent do 
+                                                if Value == 2.001 then 
+                                                      --// Brightness detection
+                                                      Result.Parent[Index] = 100
+                                                      --print("Brightness DTC:", Result.Parent)
+                                                end;
+
+                                                if Value == 2.079 then 
+                                                      --// Haze detection 1
+                                                      Result.Parent[Index] = -0.1;
+                                                      --print("Haze DTC:", Result.Parent)
+                                                end;
+                                          end;
+                                    end;
+                              end;	
+                        end;
+
+                        if FOVResults then 
+                              for FOVIndex, FOVResult in FOVResults do 
+                                    if FOVResult and type(FOVResult.Parent) == "table" then 
+                                          for Index, Value in FOVResult.Parent do 
+                                                if Value == 104 or Value == 105 then
+                                                      --// FOV detection
+                                                      FOVResult.Parent[Index] = 121
+                                                      --print("FOV DTC:", FOVResult.Parent)
+                                                end;
+                                          end;
+                                    end;
+                              end;
+                        end;
+
+                        if WalkspeedResults then 
+                              for WalkspeedIndex, Result in WalkspeedResults do 
+                                    local Parent = Result.Parent; 
+                                    if Parent and type(Parent) == "table" then 
+                                          for Index, Value in Result.Parent do 
+                                                if Value == 18.01 then 
+                                                      --// Walkspeed detection
+                                                      Result.Parent[Index] = 50;
+                                                      --print("WalkSpeed DTC:", Result.Parent)
+                                                end;
+                                          end;
+                                    end;
+                              end;
+                        end;
+
+                        if HazeResults then 
+                              for Index, Result in HazeResults do 
+                                    local Parent = Result.Parent; 
+                                    if Parent then 
+                                          for Index, Value in Result.Parent do 
+                                                if Value == 2.079 then 
+                                                      --// Haze detection 2
+                                                      Result.Parent[Index] = -0.1;
+                                                      --print("Haze DTC:", Result.Parent)
+                                                end;
+                                          end;
+                                    end;
+                              end;	
+                        end;
+                        ]]
+			end;
+		end;
+
+		Log("[Skidware]: Bypass Fully Loaded!")
+	end
+end)();
+
+wait(1)
+
 local CloneRef = cloneref or function(a)return a end
 
 --// Service handlers
