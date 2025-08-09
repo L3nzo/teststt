@@ -401,7 +401,7 @@ local library = {
 	backgroundColor = Color3.fromRGB(31, 31, 31),
 	headerColor = Color3.fromRGB(255, 255, 255),
 	companyColor = Color3.fromRGB(163, 151, 255),
-	acientColor = Color3.fromRGB(167, 154, 121),
+	acientColor = Color3.fromRGB(10,30,61),
 	darkGray = Color3.fromRGB(27, 27, 27),
 	lightGray = Color3.fromRGB(48, 48, 48),
 
